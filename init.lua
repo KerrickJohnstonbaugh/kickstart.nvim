@@ -687,6 +687,36 @@ require('lazy').setup(
           -- ts_ls = {},
           --
 
+          pyright = {
+            -- workarkound to avoid duplicating hints for unused variables
+            -- spent way too much time, but found solution here: https://www.reddit.com/r/neovim/comments/11k5but/how_to_disable_pyright_diagnostics/
+            capabilities = (function()
+              local pyright_capabilities = vim.lsp.protocol.make_client_capabilities()
+              pyright_capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
+              pyright_capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true -- https://www.reddit.com/r/neovim/comments/1ao6c5a/how_to_make_the_lsp_aware_of_changes_made_to/
+              return pyright_capabilities
+            end)(),
+            settings = {
+              pyright = {
+                -- Using Ruff's import organizer
+                disableOrganizeImports = true,
+              },
+              python = {
+                analysis = {
+                  -- Ignore all files for analysis to exclusively use Ruff for linting
+                  ignore = { '*' },
+                  diagnosticSeverityOverrides = {
+                    reportUnusedVariable = 'warning', -- or anything
+                  },
+                },
+              },
+            },
+          },
+          ruff = {
+            settings = {
+              -- Ruff language server settings go here
+            },
+          },
           lua_ls = {
             -- cmd = { ... },
             -- filetypes = { ... },
@@ -1011,6 +1041,19 @@ require('lazy').setup(
     },
   }
 )
+
+-- manual lsp configuration
+-- Optional: Only required if you need to update the language server settings
+-- vim.lsp.config('ty', {
+--   init_options = {
+--     settings = {
+--       -- ty language server settings go here
+--     },
+--   },
+-- })
+
+-- Required: Enable the language server
+vim.lsp.enable 'ty'
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
