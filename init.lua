@@ -1015,6 +1015,14 @@ require('lazy').setup(
     -- In normal mode type `<space>sh` then write `lazy.nvim-plugin`
     -- you can continue same window with `<space>sr` which resumes last telescope search
     {
+      'stevearc/oil.nvim',
+      ---@module 'oil'
+      opts = {},
+      -- Optional dependencies
+      dependencies = { { 'echasnovski/mini.icons', opts = {} } },
+      -- dependencies = { "nvim-tree/nvim-web-devicons" }, -- use if prefer nvim-web-devicons
+    },
+    {
       'christoomey/vim-tmux-navigator',
       lazy = false,
     },
@@ -1043,16 +1051,17 @@ require('lazy').setup(
   }
 )
 
--- manual lsp configuration
--- Optional: Only required if you need to update the language server settings
--- vim.lsp.config('ty', {
---   init_options = {
---     settings = {
---       -- ty language server settings go here
---     },
---   },
--- })
-
+require('oil').setup {
+  lsp_file_methods = {
+    -- Enable or disable LSP file operations
+    enabled = true,
+    -- Time to wait for LSP file operations to complete before skipping
+    timeout_ms = 1000,
+    -- Set to true to autosave buffers that are updated with LSP willRenameFiles
+    -- Set to "unmodified" to only save unmodified buffers
+    autosave_changes = 'unmodified',
+  },
+}
 -- Required: Enable the language server
 vim.lsp.enable 'ty'
 
