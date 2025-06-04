@@ -151,6 +151,8 @@ vim.o.splitbelow = true
 --   and `:help lua-options-guide`
 vim.o.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
+-- use vertical diff by default
+vim.opt.diffopt = "internal,filler,closeoff,linematch:40,vertical"
 
 -- Preview substitutions live, as you type!
 vim.o.inccommand = 'split'
@@ -204,6 +206,11 @@ vim.keymap.set('n', '<M-k>', '<cmd>cprev<CR>', { desc = 'Prev in quickfix list' 
 -- jk/kj simultaneously to exit insert mode
 vim.keymap.set('i', 'jk', '<ESC>')
 vim.keymap.set('i', 'kj', '<ESC>')
+
+-- auto close parentheses
+vim.keymap.set('i', '(', '()<Left>')
+vim.keymap.set('i', '[', '[]<Left>')
+vim.keymap.set('i', '{', '{}<Left>')
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -288,6 +295,7 @@ require('lazy').setup(
           topdelete = { text = '‾' },
           changedelete = { text = '~' },
         },
+        current_line_blame = false,
       },
     },
 
@@ -551,7 +559,7 @@ require('lazy').setup(
             map('gra', vim.lsp.buf.code_action, '[G]oto Code [A]ction', { 'n', 'x' })
 
             -- Find references for the word under your cursor.
-            map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+            map('grr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
 
             -- Jump to the implementation of the word under your cursor.
             --  Useful when your language has ways of declaring types without an actual implementation.
@@ -577,7 +585,7 @@ require('lazy').setup(
             -- Jump to the type of the word under your cursor.
             --  Useful when you're not sure what type a variable is and you want to see
             --  the definition of its *type*, not where it was *defined*.
-            map('gt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
+            map('grt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
 
             -- This function resolves a difference between neovim nightly (version 0.11) and stable (version 0.10)
             ---@param client vim.lsp.Client
@@ -662,7 +670,6 @@ require('lazy').setup(
         --  By default, Neovim doesn't support everything that is in the LSP specification.
         --  When you add blink.cmp, luasnip, etc. Neovim now has *more* capabilities.
         --  So, we create new capabilities with blink.cmp, and then broadcast that to the servers.
-        local capabilities = require('blink.cmp').get_lsp_capabilities()
 
         -- Enable the following language servers
         --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
@@ -687,6 +694,7 @@ require('lazy').setup(
           -- ts_ls = {},
           --
 
+          yamlls = {},
           pyright = {
             -- workarkound to avoid duplicating hints for unused variables
             -- spent way too much time, but found solution here: https://www.reddit.com/r/neovim/comments/11k5but/how_to_disable_pyright_diagnostics/
@@ -1063,7 +1071,7 @@ require('oil').setup {
   },
 }
 -- Required: Enable the language server
-vim.lsp.enable 'ty'
+-- vim.lsp.enable 'ty'
 
 -- stuff to disable format on save
 vim.api.nvim_create_user_command('FormatDisable', function(args)
@@ -1087,5 +1095,14 @@ end, {
 -- call this on init to disable
 vim.api.nvim_command 'FormatDisable'
 
+vim.lsp.config('pyright', {
+  capabilities = (function()
+    local pyright_capabilities = vim.lsp.protocol.make_client_capabilities()
+    pyright_capabilities.textDocument.publishDiagnostics.tagSupport.valueSet = { 2 }
+    pyright_capabilities.workspace.didChangeWatchedFiles.dynamicRegistration = true -- https://www.reddit.com/r/neovim/comments/1ao6c5a/how_to_make_the_lsp_aware_of_changes_made_to/
+    return pyright_capabilities
+  end)(),
+  -- root_markers = { '.git' },
+})
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
